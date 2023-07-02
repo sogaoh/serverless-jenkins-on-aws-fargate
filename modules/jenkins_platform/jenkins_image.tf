@@ -15,12 +15,8 @@ resource "aws_ecr_repository" "jenkins_controller" {
 
 }
 
-data "template_file" jenkins_configuration_def {
-
-  template = file("${path.module}/docker/files/jenkins.yaml.tpl")
-  
-
-  vars = {
+locals {
+  jenkins_configuration_def = templatefile("${path.module}/docker/files/jenkins.yaml.tpl", {
     ecs_cluster_fargate       = aws_ecs_cluster.jenkins_controller.arn
     ecs_cluster_fargate_spot  = aws_ecs_cluster.jenkins_agents.arn
     cluster_region            = local.region
@@ -30,7 +26,7 @@ data "template_file" jenkins_configuration_def {
     agent_security_groups     = aws_security_group.jenkins_controller_security_group.id
     execution_role_arn        = aws_iam_role.ecs_execution_role.arn
     subnets                   = join(",", var.jenkins_controller_subnet_ids)
-  }
+  })
 }
 
 resource "null_resource" "render_template" {
@@ -38,12 +34,12 @@ resource "null_resource" "render_template" {
     src_hash = file("${path.module}/docker/files/jenkins.yaml.tpl")
     always_run = timestamp()
   }
-  depends_on = [data.template_file.jenkins_configuration_def]
+  depends_on = [local.jenkins_configuration_def]
 
   provisioner "local-exec" {
     command = <<EOF
 tee ${path.module}/docker/files/jenkins.yaml <<ENDF
-${data.template_file.jenkins_configuration_def.rendered}
+${local.jenkins_configuration_def}
 EOF
   }
 }

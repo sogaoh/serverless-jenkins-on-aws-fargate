@@ -19,10 +19,8 @@ resource "aws_ecs_cluster" jenkins_agents {
   }
 }
 
-data "template_file" jenkins_controller_container_def {
-  template = file("${path.module}/templates/jenkins-controller.json.tpl")
-
-  vars = {
+locals {
+  jenkins_controller_container_def = templatefile("${path.module}/templates/jenkins-controller.json.tpl", {
     name                = "${var.name_prefix}-controller"
     jenkins_controller_port = var.jenkins_controller_port
     jnlp_port           = var.jenkins_jnlp_port
@@ -34,7 +32,7 @@ data "template_file" jenkins_controller_container_def {
     log_group           = aws_cloudwatch_log_group.jenkins_controller_log_group.name
     memory              = var.jenkins_controller_memory
     cpu                 = var.jenkins_controller_cpu
-  }
+  })
 }
 
 resource "aws_kms_key" "cloudwatch" {
@@ -62,7 +60,7 @@ resource "aws_ecs_task_definition" jenkins_controller {
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.jenkins_controller_cpu
   memory                   = var.jenkins_controller_memory
-  container_definitions    = data.template_file.jenkins_controller_container_def.rendered
+  container_definitions    = local.jenkins_controller_container_def
 
   volume {
     name = "${var.name_prefix}-efs"
