@@ -1,7 +1,7 @@
 // Jenkins Container Infra (Fargate)
 resource "aws_ecs_cluster" jenkins_controller {
   name               = "${var.name_prefix}-main"
-  capacity_providers = ["FARGATE"]
+  //capacity_providers = ["FARGATE"]
   tags               = var.tags
   setting {
     name = "containerInsights"
@@ -11,7 +11,7 @@ resource "aws_ecs_cluster" jenkins_controller {
 
 resource "aws_ecs_cluster" jenkins_agents {
   name               = "${var.name_prefix}-spot"
-  capacity_providers = ["FARGATE_SPOT"]
+  //capacity_providers = ["FARGATE_SPOT"]
   tags               = var.tags
   setting {
     name = "containerInsights"
